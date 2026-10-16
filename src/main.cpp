@@ -191,7 +191,7 @@ int main(int argc, char** argv) {
         }
         if (user_input.empty()) continue;
 
-        print_status_bar("generating - press ctrl+c to stop", true);
+        print_status_bar("generating...", true);
 
         // Chat template ile sar. İlk turda system + user, sonraki turlarda sadece user.
         // NOT: msgs dizisinin ömrü bu blokla sınırlı olduğundan, içindeki const char*

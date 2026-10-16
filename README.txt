@@ -187,6 +187,9 @@ terminalinden şu komutu çalıştırabilirsiniz:
 
     /usr/bin/gemstone_os_arm <model_path>
 
-Sohbet sırasında "exit" yazarak uygulamadan çıkabilirsiniz. Bağlam
+Sohbet sırasında "exit" yazarak veya Ctrl+C tuşlarına basarak
+uygulamadan çıkıp kartın komut satırına geçebilirsiniz; uygulamayı
+yukarıdaki komutla istediğiniz zaman (farklı bir modelle de) yeniden
+başlatabilirsiniz. Bağlam
 penceresi (1024 token) dolduğunda uygulama kapanır; yeniden
 başlatmanız gerekir.

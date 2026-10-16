@@ -6,17 +6,17 @@ gemstone_test
 *.so
 *.a
 
-# LLM Modelleri (Git'e eklenemeyecek kadar büyük dosyalar)
-*.gguf
-*.bin
-models/
-
-# İşletim sistemi kalıntıları
-.DS_Store
+# LLM modelleri (Git'e eklenemeyecek kadar büyük dosyalar)
 *.gguf
 *.onnx
 *.bin
+models/
 
+# İmaj dosyaları
+*.img
 
-*.img
-*.img
+# Harici bağımlılıklar (ayrıca indirilir)
+external/
+
+# İşletim sistemi kalıntıları
+.DS_Store

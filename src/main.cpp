@@ -125,7 +125,7 @@ static void llama_log_callback(ggml_log_level level, const char* text, void* use
 
 int main(int argc, char** argv) {
     if (argc < 2) {
-        std::cerr << C_RED << "[SYS_ERROR] Missing model. Usage: ./gemstone_chat <path_to_gguf> [n_gpu_layers]\n" << C_RESET;
+        std::cerr << C_RED << "[SYS_ERROR] Missing model. Usage: ./gemstone_os_arm <path_to_gguf> [n_gpu_layers]\n" << C_RESET;
         return 1;
     }
     std::string model_path = argv[1];
@@ -309,6 +309,17 @@ int main(int argc, char** argv) {
             }
         }
         std::cout << C_RESET << "\n";
+
+        // Asistan cevabını KV cache'te kapat. EOG token'ı yukarıdaki döngüde decode
+        // edilmediği için, bu yapılmazsa bir sonraki tur şablonu kapanmamış bir
+        // asistan mesajının arkasına eklenir ve model önceki cevabın devam ettiğini sanar.
+        llama_token eot = llama_vocab_eot(vocab);
+        if (eot == LLAMA_TOKEN_NULL) eot = llama_vocab_eos(vocab);
+        if (eot != LLAMA_TOKEN_NULL && n_cur < stats.n_ctx_total) {
+            llama_batch eot_batch = llama_batch_get_one(&eot, 1);
+            if (llama_decode(ctx, eot_batch) == 0) n_cur++;
+        }
+
         if (ctx_overflow) {
             std::cout << C_RED << "[SYS_WARN] Context window filled during generation.\n" << C_RESET;
         }

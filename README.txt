@@ -51,24 +51,39 @@ yapısıyla ilgili gözlemler aşağıda özetlenmiştir.
 Uygulamayı hızlıca denemek için hazır imajı bir SD karta flashlayın
 ve kartı T3 Gemstone O1 üzerinde başlatın.
 
-  İmaj Linki: [Google Drive Linki Buraya Eklenecek]
+  İmaj Linki: Henüz eklenmedi. İmaj dosyası (sdcard.img) boyutu
+  nedeniyle bu depoda tutulmaz.
 
 
 3. DEPO (REPO) İÇERİĞİ
 ----------------------------------------------------
-Bu depo; proje içinde kullanılan kaynak kodları, LLM modelini ve
-ihtiyaç duyulan dış kaynakları barındırır. İçerisinde Buildroot
-reposu ve llama.cpp reposu BULUNMAZ, ancak Buildroot'a entegre
-edilecek overlay (dosya sistemi katmanı) dizinini içerir. llama.cpp,
-"Geliştirme" bölümündeki adımlarda ayrıca indirilmelidir.
+Bu depo; uygulamanın kaynak kodunu (src/main.cpp), overlay hazırlama
+betiğini (prepare_overlay.sh) ve Buildroot'a entegre edilecek overlay
+(dosya sistemi katmanı) dizinini (gemstone_overlay/) içerir. Overlay
+dizininde gerekli paylaşımlı kütüphaneler (llama.cpp, ggml, libgomp,
+libstdc++) ve otomatik başlatma betiği (root/.profile) hazırdır.
+
+Depoda BULUNMAYANLAR ve ayrıca edinilmesi gerekenler:
+
+  - Buildroot ve llama.cpp repoları: "Kurulum" ve "Geliştirme"
+    bölümlerindeki adımlarda indirilir.
+  - LLM modeli: Boyutu nedeniyle depoya eklenmemiştir. Llama 3.2 1B
+    Instruct modelinin GGUF formatındaki Q4_K_M sürümünü indirip
+    gemstone_overlay/root/models/model-q4_k_m.gguf olarak kaydedin.
+    Uygulama açılışta modeli kartta /root/models/model-q4_k_m.gguf
+    yolunda arar.
+  - Derlenmiş uygulama (gemstone_os_arm): "Geliştirme" adımlarıyla
+    derlenip prepare_overlay.sh ile overlay'e eklenir.
 
 
 4. KENDİ İMAJINIZI YARATMAK İÇİN (SIFIRDAN KURULUM)
 ----------------------------------------------------
   1) Bu repoyu bilgisayarınıza indirin.
 
-  2) Gemstone destekleyen Buildroot deposunu indirin:
-     [Buildroot Linki Buraya Eklenecek]
+  2) Gemstone destekleyen Buildroot deposunu, bu reponun yanına
+     (aynı üst dizine) indirin:
+
+         git clone https://github.com/t3gemstone/buildroot.git
 
   3) T3 Gemstone konfigürasyonunu Buildroot'a uygulamak için
      Buildroot ana dizininde şu komutu çalıştırın:
@@ -84,8 +99,12 @@ edilecek overlay (dosya sistemi katmanı) dizinini içerir. llama.cpp,
          System properties -> root filesystem overlay directories
 
      Mevcut yolların yanına bir boşluk bırakarak
-     "../llama_chat_workspace/gemstone_overlay" yolunu ekleyin,
-     kaydedin ve çıkın.
+     "../llama-chat-bot/gemstone_overlay" yolunu ekleyin, kaydedin
+     ve çıkın. (Yol Buildroot ana dizinine göre verilir; repoyu
+     farklı bir yere indirdiyseniz yolu ona göre değiştirin.)
+
+  5) Derlemeden önce LLM modelinin ve derlenmiş uygulamanın overlay
+     içinde olduğundan emin olun (bkz. "Depo İçeriği").
 
   Derleme ve U-Boot Yapılandırması
   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -132,19 +151,31 @@ yapmadan önce ayrıca indirilmesi gerekir.
 
          git clone https://github.com/ggml-org/llama.cpp external/llama.cpp
 
-  2) Projenin kaynak kodlarında değişiklik yaptıktan sonra yeni
-     çalıştırılabilir dosyayı üretmek için, llama.cpp dizini
-     içerisindeyken aşağıdaki derleme komutunu çalıştırın:
+  2) llama.cpp kütüphanelerini kart için (aarch64) derleyin. Sonunda
+     external/llama.cpp/build/bin/ altında libllama.so ve libggml*.so
+     dosyaları oluşmalıdır. Örnek bir çapraz derleme komutu:
 
          cd external/llama.cpp
+         cmake -B build -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+               -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+               -DGGML_NATIVE=OFF -DLLAMA_CURL=OFF
+         cmake --build build --config Release -j
+
+  3) Projenin kaynak kodlarında değişiklik yaptıktan sonra yeni
+     çalıştırılabilir dosyayı üretmek için, external/llama.cpp
+     dizini içerisindeyken aşağıdaki derleme komutunu çalıştırın:
+
          /usr/bin/aarch64-linux-gnu-g++ -O3 -std=c++17 ../../src/main.cpp -o ../../gemstone_os_arm -I include -I ggml/include -L build/bin -lllama -lggml -lggml-base -lggml-cpu -Wl,-rpath,build/bin
 
-  3) Yeni oluşan uygulamayı overlay içerisine eklemek için proje
-     dizinindeki "prepare_overlay" betiğini çalıştırın.
+  4) Yeni oluşan uygulamayı ve kütüphaneleri overlay içerisine
+     eklemek için proje dizinindeki betiği çalıştırın:
 
-  Not: Modelin dosya yolunu veya adını değiştirmek isterseniz, bu
-  ayarı doğrudan "prepare_overlay" betiğinin içinden
-  güncelleyebilirsiniz.
+         cd ../..
+         ./prepare_overlay.sh
+
+  Not: Modelin dosya yolunu veya adını değiştirmek isterseniz,
+  prepare_overlay.sh betiğinin oluşturduğu .profile içindeki
+  MODEL_PATH değişkenini güncelleyebilirsiniz.
 
 
 6. UYGULAMAYI ÇALIŞTIRMA
@@ -155,3 +186,7 @@ kapatıp başka bir model ile çalıştırmak isterseniz, kart
 terminalinden şu komutu çalıştırabilirsiniz:
 
     /usr/bin/gemstone_os_arm <model_path>
+
+Sohbet sırasında "exit" yazarak uygulamadan çıkabilirsiniz. Bağlam
+penceresi (1024 token) dolduğunda uygulama kapanır; yeniden
+başlatmanız gerekir.

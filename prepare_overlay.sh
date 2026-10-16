@@ -5,14 +5,13 @@ set -e
 
 echo -e "\n🚀 [GEMSTONE OS] Buildroot Overlay Hazırlama Scripti Başlıyor...\n"
 
-# Yollar (Çalışma ortamına göre)
-WORKSPACE_DIR="/home/seda/workspace/t3_internship/llama_chat_workspace"
+# Yollar (scriptin bulunduğu dizine, yani repo kök dizinine göre)
+WORKSPACE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OVERLAY_DIR="$WORKSPACE_DIR/gemstone_overlay"
 
 # Kaynak dosyaların yolları
 EXE_FILE="$WORKSPACE_DIR/gemstone_os_arm"
-LIB_LLAMA="$WORKSPACE_DIR/external/llama.cpp/build/bin/libllama.so"
-LIB_GGML="$WORKSPACE_DIR/external/llama.cpp/build/bin/libggml.so"
+LIB_DIR="$WORKSPACE_DIR/external/llama.cpp/build/bin"
 
 # 1. Overlay Klasör Ağacını Oluştur
 echo "📂 Klasör ağacı oluşturuluyor..."
@@ -32,9 +31,13 @@ else
 fi
 
 echo "📚 Kütüphaneler kopyalanıyor..."
-if [ -f "$LIB_LLAMA" ] && [ -f "$LIB_GGML" ]; then
-    cp "$LIB_LLAMA" "$OVERLAY_DIR/usr/lib/"
-    cp "$LIB_GGML" "$OVERLAY_DIR/usr/lib/"
+# Uygulama libllama ile birlikte libggml, libggml-base ve libggml-cpu'ya da
+# ihtiyaç duyar. Program bu kütüphaneleri sürüm numaralı adlarıyla
+# (ör. libllama.so.0) aradığı için sembolik linkler korunarak (-a) kopyalanır.
+# Not: libgomp ve libstdc++ çapraz derleyicinin sysroot'undan elle eklenmiştir;
+# bu script onlara dokunmaz.
+if [ -f "$LIB_DIR/libllama.so" ] && [ -f "$LIB_DIR/libggml.so" ]; then
+    cp -a "$LIB_DIR"/libllama.so* "$LIB_DIR"/libggml*.so* "$OVERLAY_DIR/usr/lib/"
 else
     echo "❌ HATA: .so kütüphaneleri bulunamadı! llama.cpp CMake derlemesini kontrol et."
     exit 1
@@ -65,4 +68,4 @@ fi
 EOF
 
 echo -e "\n✅ BAŞARILI! Overlay klasörü şurada hazırlandı: $OVERLAY_DIR"
-echo "👉 Tek yapman gereken bu klasörün içindeki (usr ve root) dosyaları Buildroot'un ana overlay klasörüne kopyalamak."
+echo "👉 Bu klasör Buildroot'ta 'root filesystem overlay directories' ayarına eklendiyse doğrudan 'make' ile imajı derleyebilirsin."

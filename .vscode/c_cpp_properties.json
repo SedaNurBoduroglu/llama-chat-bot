@@ -4,8 +4,8 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/seda/workspace/t3_internship/llama_chat_workspace/external/llama.cpp/include",
-                "/home/seda/workspace/t3_internship/llama_chat_workspace/external/llama.cpp/ggml/include"
+                "${workspaceFolder}/external/llama.cpp/include",
+                "${workspaceFolder}/external/llama.cpp/ggml/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

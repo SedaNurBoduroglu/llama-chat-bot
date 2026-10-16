@@ -16,3 +16,6 @@ models/
 *.gguf
 *.onnx
 *.bin
+
+
+*.img
